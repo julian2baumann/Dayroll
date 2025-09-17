@@ -30,7 +30,18 @@ export interface TodayFeedResponse {
   groups: TodayFeedGroup[]
 }
 
+export interface FeedListResponse {
+  type: 'youtube' | 'podcast' | 'news'
+  range: 'today' | '3d' | '7d'
+  generatedAt: string
+  sections: Array<{
+    label: string
+    items: TodayFeedItem[]
+  }>
+}
+
 const TODAY_FEED_QUERY_KEY = ['today-feed']
+const FEED_LIST_QUERY_KEY = ['feed-list']
 
 async function fetchTodayFeed(token: string): Promise<TodayFeedResponse> {
   const response = await fetch('/api/feed/today', {
@@ -61,4 +72,67 @@ export function useTodayFeedQuery() {
     },
     staleTime: 60_000,
   })
+}
+
+async function fetchFeedList(
+  token: string,
+  type: FeedListResponse['type'],
+  range: FeedListResponse['range'],
+  limit: number,
+  offset: number,
+): Promise<FeedListResponse> {
+  const params = new URLSearchParams({ range, limit: String(limit), offset: String(offset) })
+  const response = await fetch(`/api/feed/${type}?${params.toString()}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+
+  if (!response.ok) {
+    const payload = await response.json().catch(() => ({ error: 'Failed to fetch feed' }))
+    const message = typeof payload?.error === 'string' ? payload.error : 'Failed to fetch feed'
+    throw new ApiError(message, response.status)
+  }
+
+  return (await response.json()) as FeedListResponse
+}
+
+export function useFeedListQuery(params: {
+  type: FeedListResponse['type']
+  range: FeedListResponse['range']
+  limit?: number
+  offset?: number
+}) {
+  const { session } = useAuth()
+  const token = session?.access_token
+  const { type, range, limit = 50, offset = 0 } = params
+
+  return useQuery({
+    queryKey: [...FEED_LIST_QUERY_KEY, type, range, limit, offset],
+    enabled: Boolean(token),
+    queryFn: () => {
+      if (!token) throw new ApiError('Missing auth token', 401)
+      return fetchFeedList(token, type, range, limit, offset)
+    },
+    staleTime: 60_000,
+  })
+}
+
+export function isFeedListQueryKey(
+  queryKey: unknown,
+): queryKey is ReturnType<typeof buildFeedListQueryKey> {
+  return Array.isArray(queryKey) && queryKey[0] === FEED_LIST_QUERY_KEY[0]
+}
+
+export function buildFeedListQueryKey(
+  type: FeedListResponse['type'],
+  range: FeedListResponse['range'],
+  limit = 50,
+  offset = 0,
+) {
+  return [...FEED_LIST_QUERY_KEY, type, range, limit, offset] as const
+}
+
+export function getTodayFeedQueryKey() {
+  return TODAY_FEED_QUERY_KEY
 }

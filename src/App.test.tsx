@@ -62,6 +62,9 @@ describe('App', () => {
         },
       ]),
     )
+    vi.mocked(fetch).mockResolvedValueOnce(
+      createResponse({ generatedAt: new Date().toISOString(), groups: [] }),
+    )
 
     render(<App />)
 
