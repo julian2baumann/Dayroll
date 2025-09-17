@@ -10,7 +10,10 @@ import type { FeedRange } from '../dateRanges'
 
 export type ContentRepository = ReturnType<typeof createContentRepository>
 
-export function createContentRepository(db: AnyPgDatabase<typeof schema>) {
+export function createContentRepository(
+  db: AnyPgDatabase<typeof schema>,
+  options: { emulateUpsert?: boolean } = {},
+) {
   async function upsertMany(items: ContentUpsertInput[]): Promise<number> {
     if (items.length === 0) return 0
 
@@ -26,13 +29,7 @@ export function createContentRepository(db: AnyPgDatabase<typeof schema>) {
         url: prepared.url,
         thumbnailUrl: prepared.thumbnailUrl ?? null,
         description: prepared.description ?? null,
-        publishedAt: new Date(
-          typeof prepared.publishedAt === 'number'
-            ? prepared.publishedAt
-            : prepared.publishedAt instanceof Date
-              ? prepared.publishedAt.getTime()
-              : new Date(prepared.publishedAt as unknown as string).getTime(),
-        ),
+        publishedAt: new Date(prepared.publishedAt),
         dedupeHash: prepared.dedupeHash,
         durationSeconds: prepared.durationSeconds ?? null,
         summary: prepared.summary ?? null,
@@ -40,32 +37,49 @@ export function createContentRepository(db: AnyPgDatabase<typeof schema>) {
       }
     })
 
-    const chunkSize = 100
     let affected = 0
 
-    for (let i = 0; i < normalized.length; i += chunkSize) {
-      const slice = normalized.slice(i, i + chunkSize)
-      const result = await db
+    if (options.emulateUpsert) {
+      for (const record of normalized) {
+        await db.transaction(async (tx) => {
+          await tx
+            .delete(contentItems)
+            .where(
+              and(
+                eq(contentItems.sourceType, record.sourceType),
+                eq(contentItems.externalId, record.externalId),
+              ),
+            )
+
+          await tx.insert(contentItems).values(record)
+        })
+
+        affected += 1
+      }
+      return affected
+    }
+
+    for (const record of normalized) {
+      await db
         .insert(contentItems)
-        .values(slice)
+        .values(record)
         .onConflictDoUpdate({
           target: [contentItems.sourceType, contentItems.externalId],
           set: {
-            title: (values) => values.title,
-            creator: (values) => values.creator,
-            url: (values) => values.url,
-            thumbnailUrl: (values) => values.thumbnailUrl,
-            description: (values) => values.description,
-            publishedAt: (values) => values.publishedAt,
-            dedupeHash: (values) => values.dedupeHash,
-            summary: (values) => values.summary,
-            topics: (values) => values.topics,
-            durationSeconds: (values) => values.durationSeconds,
+            title: record.title,
+            creator: record.creator,
+            url: record.url,
+            thumbnailUrl: record.thumbnailUrl,
+            description: record.description,
+            publishedAt: record.publishedAt,
+            dedupeHash: record.dedupeHash,
+            summary: record.summary,
+            topics: record.topics,
+            durationSeconds: record.durationSeconds,
           },
         })
-        .returning({ id: contentItems.id })
 
-      affected += result.length
+      affected += 1
     }
 
     return affected
@@ -87,12 +101,37 @@ export function createContentRepository(db: AnyPgDatabase<typeof schema>) {
       },
       limit: limit ?? 50,
       offset: offset ?? 0,
-      orderBy: (table, { desc: orderDesc }) => orderDesc(table.publishedAt),
+      orderBy: (table, { desc }) => desc(table.publishedAt),
     })
+  }
+
+  async function listTodayGrouped(now: Date = new Date()) {
+    const window = getRangeBounds('today', now)
+    const items = await db
+      .select()
+      .from(contentItems)
+      .where(
+        and(gte(contentItems.publishedAt, window.start), lte(contentItems.publishedAt, window.end)),
+      )
+      .orderBy(contentItems.publishedAt.desc())
+
+    return items.reduce<Record<string, schema.ContentItem[]>>((acc, item) => {
+      const group = item.sourceType
+      if (!acc[group]) {
+        acc[group] = []
+      }
+      acc[group].push(item)
+      return acc
+    }, {})
   }
 
   return {
     upsertMany,
     listByRange,
+    listTodayGrouped,
   }
 }
+
+export type GroupedTodayFeed = Awaited<
+  ReturnType<ReturnType<typeof createContentRepository>['listTodayGrouped']>
+>

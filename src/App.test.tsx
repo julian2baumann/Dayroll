@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import type { Session, User } from '@supabase/supabase-js'
 import { vi } from 'vitest'
 import App from './App'
@@ -9,8 +9,20 @@ vi.mock('./context/AuthContext')
 const mockUseAuth = vi.mocked(useAuth)
 
 describe('App', () => {
+  const createResponse = (data: unknown, init: ResponseInit = {}) =>
+    new Response(JSON.stringify(data), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+      ...init,
+    })
+
   beforeEach(() => {
     mockUseAuth.mockReset()
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(createResponse([])))
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
   })
 
   const authValue = (overrides: Partial<ReturnType<typeof useAuth>>) => ({
@@ -22,7 +34,7 @@ describe('App', () => {
     ...overrides,
   })
 
-  it('renders the main experience when authenticated', () => {
+  it('renders the application shell when authenticated', async () => {
     const user = {
       id: 'user-1',
       email: 'user@example.com',
@@ -32,19 +44,38 @@ describe('App', () => {
     mockUseAuth.mockReturnValue(
       authValue({
         user,
-        session: {} as Session,
+        session: { access_token: 'test-token' } as Session,
       }),
+    )
+
+    vi.mocked(fetch).mockResolvedValueOnce(
+      createResponse([
+        {
+          id: 'sub-1',
+          userId: user.id,
+          sourceType: 'youtube',
+          sourceId: 'UC123',
+          sourceName: 'Example Channel',
+          metadata: null,
+          isActive: true,
+          createdAt: new Date().toISOString(),
+        },
+      ]),
     )
 
     render(<App />)
 
-    expect(
-      screen.getByRole('heading', {
-        level: 1,
-        name: /everything new today/i,
-      }),
-    ).toBeInTheDocument()
-    expect(screen.getAllByText(/Playwright|Vitest|ESLint/i).length).toBeGreaterThanOrEqual(1)
+    await waitFor(() =>
+      expect(
+        screen.getByRole('heading', {
+          level: 2,
+          name: /New Today/i,
+        }),
+      ).toBeInTheDocument(),
+    )
+
+    expect(screen.getAllByRole('navigation', { name: /Primary/i }).length).toBeGreaterThan(0)
+    expect(screen.getAllByText(/Sign out/i).length).toBeGreaterThan(0)
   })
 
   it('shows the sign-in form when no user is present', () => {
