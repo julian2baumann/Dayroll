@@ -41,7 +41,7 @@ _Last updated: 2025-09-17 15:00 UTC_
 
 ## Milestone 2 — Ingestion Services
 
-- [ ] **Task 2.1 — RSS Ingestor Service**  
+- [x] **Task 2.1 — RSS Ingestor Service** (commit `16c8ed6` — 2025-09-17)  
        **Rationale:** Provide baseline ingest pipeline for news/podcast RSS feeds with retry/backoff and dedupe.  
        **Acceptance Criteria:**
   - Worker/service polls configured feeds, parses XML (with media attachments), dedupes via hash/external ID, stores content_items.
