@@ -14,25 +14,20 @@ _Last updated: 2025-09-17 14:00 UTC_
    - Break into **Milestones → Tasks** with **acceptance criteria**.
    - Each task must include: rationale, DoD (Definition of Done), test plan, and artifacts to produce.
 2) After completing a task:
-   - **Check it off** in `docs/ROADMAP.md` (link the PR).
+   - **Check it off** in `docs/ROADMAP.md` (note the commit hash or summary).
    - Select the **next** unchecked task and continue (sequential loop).
 
 ## Workflow per task
-1) Create branch: `feat/<short-task-name>`
-2) Implement with **small, reviewable commits**.
-3) Run local checks (replace with your package manager as needed):
+1) Work on a topical branch (e.g., `feat/<short-task-name>`) locally to keep commits focused.
+2) Run required checks before presenting work:
    - **Install:** `npm ci` (or `pnpm install` / `yarn install`)
-   - **Typecheck:** `npm run typecheck` (if applicable)
-   - **Lint/Format:** `npm run lint` and `npm run format` (or fix)
-   - **Unit/Integration tests:** `npm test -- --watch=false`
-   - **E2E tests (Playwright):** `npx playwright test`
-4) Open a PR titled `feat: <task>` and include in the description:
-   - Summary of changes (bullets)
-   - Risk/limitations
-   - How to test (commands + URLs)
-   - Screenshots for UI changes (desktop, tablet, mobile)
-   - Performance notes vs budgets (see below)
-5) **WAIT** for approval before merging. After merge, update ROADMAP and start the next task.
+   - **Typecheck:** `npm run typecheck`
+   - **Lint/Format:** `npm run lint` and `npm run format`
+   - **Unit/Integration tests:** `npm test`
+   - **E2E tests (Playwright):** `npm run e2e`
+3) Once the task passes the rubric and tests, fast-forward `main` locally and push directly to the remote `main` branch. No PR or manual review step.
+4) Publish a succinct task note in the chat summarising changes, tests, and verification guidance for stakeholders.
+5) Update `docs/ROADMAP.md` to mark the task complete (with commit hash or summary) and proceed immediately to the next item.
 
 ## Quality gates
 - **Tests are mandatory** for everything implemented (unit, integration, and E2E where UI is affected).
@@ -50,9 +45,9 @@ _Last updated: 2025-09-17 14:00 UTC_
 - Assume Node.js LTS and Playwright available. If tooling is missing, propose a setup PR first.
 - **Do not** exfiltrate code or credentials. Internet access only for allowed package installs and documented steps.
 
-## PR conventions
-- Keep PRs focused and small (ideally < 600 LOC diff). Split if larger.
-- Link issues/tasks in `docs/ROADMAP.md`.
+## Commit conventions
+- Keep commits focused and small (ideally < 600 LOC diff). Split if larger.
+- Reference roadmap tasks in commit messages when helpful.
 - Use conventional commits in messages when possible.
 
 ## Pivot protocol

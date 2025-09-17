@@ -2,7 +2,7 @@
 
 _Last updated: 2025-09-17 15:00 UTC_
 
-> Owned by Codex per **AGENTS.md**. Execute sequentially; check items off with PR links after merge.
+> Owned by Codex per **AGENTS.md**. Execute sequentially; after each task fast-forward `main`, check items off with commit notes, then continue.
 
 ## Milestone 0 — Tooling & Baseline
 
