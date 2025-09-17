@@ -24,8 +24,12 @@ declare module 'fastify' {
 type SourceType = (typeof contentItemSourceType.enumValues)[number]
 
 export interface ContentService {
-  listToday(now?: Date): Promise<Record<SourceType, ContentItemRecord[]>>
+  listToday(params: {
+    userId: string
+    now?: Date
+  }): Promise<Record<SourceType, ContentItemRecord[]>>
   listByRange(params: {
+    userId: string
     sourceType: SourceType
     range: 'today' | '3d' | '7d'
     limit: number
@@ -51,7 +55,7 @@ const defaultDeps: Dependencies = {
 }
 
 function createSupabaseContentService(client: SupabaseClient): ContentService {
-  const listToday: ContentService['listToday'] = async (now = new Date()) => {
+  const listToday: ContentService['listToday'] = async ({ userId, now = new Date() }) => {
     const window = getRangeBounds('today', now)
     const { data, error } = await client
       .from('content_items')
@@ -62,10 +66,12 @@ function createSupabaseContentService(client: SupabaseClient): ContentService {
 
     if (error) throw error
 
+    const savedIds = await fetchSavedContentIds(client, userId)
+
     const grouped = emptyContentGroups()
 
     for (const item of data ?? []) {
-      const record = deserializeContentRow(item as never)
+      const record = markSaved(deserializeContentRow(item as never), savedIds)
       grouped[record.sourceType].push(record)
     }
 
@@ -73,6 +79,7 @@ function createSupabaseContentService(client: SupabaseClient): ContentService {
   }
 
   const listByRange: ContentService['listByRange'] = async ({
+    userId,
     sourceType,
     range,
     limit,
@@ -91,7 +98,8 @@ function createSupabaseContentService(client: SupabaseClient): ContentService {
       .range(offset, offset + limit - 1)
 
     if (error) throw error
-    return (data ?? []).map((item) => deserializeContentRow(item as never))
+    const savedIds = await fetchSavedContentIds(client, userId)
+    return (data ?? []).map((item) => markSaved(deserializeContentRow(item as never), savedIds))
   }
 
   const saveContent: ContentService['saveContent'] = async (userId, contentItemId) => {
@@ -121,6 +129,23 @@ function createSupabaseContentService(client: SupabaseClient): ContentService {
     listByRange,
     saveContent,
     removeSavedContent,
+  }
+}
+
+async function fetchSavedContentIds(client: SupabaseClient, userId: string) {
+  const { data, error } = await client
+    .from('saved_items')
+    .select('content_item_id')
+    .eq('user_id', userId)
+
+  if (error) throw error
+  return new Set((data ?? []).map((row) => row.content_item_id))
+}
+
+function markSaved(record: ContentItemRecord, savedIds: Set<string>): ContentItemRecord {
+  return {
+    ...record,
+    isSaved: savedIds.has(record.id),
   }
 }
 
@@ -183,9 +208,14 @@ export async function createApp(deps: Partial<Dependencies> = {}) {
           getSupabaseClient: () => serviceClient,
         }),
     },
-    async (_request, reply) => {
+    async (request, reply) => {
+      const user = request.supabaseUser
+      if (!user) {
+        reply.code(401).send({ error: 'Unauthorized' })
+        return
+      }
       const now = new Date()
-      const grouped = await contentService.listToday(now)
+      const grouped = await contentService.listToday({ userId: user.id, now })
       reply.send({
         generatedAt: now.toISOString(),
         groups: contentItemSourceType.enumValues.map((type) => ({
@@ -220,7 +250,13 @@ export async function createApp(deps: Partial<Dependencies> = {}) {
       }
 
       const now = new Date()
+      const user = request.supabaseUser
+      if (!user) {
+        reply.code(401).send({ error: 'Unauthorized' })
+        return
+      }
       const items = await contentService.listByRange({
+        userId: user.id,
         sourceType: parseParams.data.type,
         range: parseQuery.data.range,
         limit: parseQuery.data.limit,

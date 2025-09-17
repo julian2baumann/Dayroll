@@ -30,8 +30,23 @@ describe('createApp', () => {
 
   const createContentServiceStub = (overrides: Partial<ContentService> = {}) => {
     const stub: ContentService = {
-      listToday: vi.fn(async () => emptyContentGroups()),
-      listByRange: vi.fn(async () => [] as ContentItemRecord[]),
+      listToday: vi.fn(async (params: { userId: string; now?: Date }) => {
+        void params
+        return emptyContentGroups()
+      }),
+      listByRange: vi.fn(
+        async (params: {
+          userId: string
+          sourceType: ContentItemRecord['sourceType']
+          range: 'today' | '3d' | '7d'
+          limit: number
+          offset: number
+          now?: Date
+        }) => {
+          void params
+          return [] as ContentItemRecord[]
+        },
+      ),
       saveContent: vi.fn(async () => {}),
       removeSavedContent: vi.fn(async () => true),
     }
@@ -52,6 +67,7 @@ describe('createApp', () => {
     topics: null,
     durationSeconds: null,
     publishedAt: new Date('2025-09-17T08:00:00Z'),
+    isSaved: false,
     ...overrides,
   })
 
@@ -341,10 +357,12 @@ describe('createApp', () => {
     const groups = emptyContentGroups()
     groups.news.push(item)
 
-    const { app, contentService } = await setupApp({
+    const listTodayMock = vi.fn(async () => groups)
+
+    const { app } = await setupApp({
       user,
       contentOverrides: {
-        listToday: vi.fn(async () => groups),
+        listToday: listTodayMock as ContentService['listToday'],
       },
     })
 
@@ -366,8 +384,9 @@ describe('createApp', () => {
       id: 'content-42',
       title: 'Breaking News',
       timeAgo: '4 hours ago',
+      isSaved: false,
     })
-    expect(contentService.listToday).toHaveBeenCalled()
+    expect(listTodayMock).toHaveBeenCalledWith({ userId: 'user-1', now: expect.any(Date) })
 
     vi.useRealTimers()
   })
@@ -403,10 +422,12 @@ describe('createApp', () => {
       }),
     ]
 
-    const { app, contentService } = await setupApp({
+    const listByRangeMock = vi.fn(async () => items)
+
+    const { app } = await setupApp({
       user,
       contentOverrides: {
-        listByRange: vi.fn(async () => items),
+        listByRange: listByRangeMock as ContentService['listByRange'],
       },
     })
 
@@ -430,7 +451,8 @@ describe('createApp', () => {
     expect(sections[1]).toMatchObject({ label: 'Yesterday' })
     expect(sections[2]).toMatchObject({ label: '2 days ago' })
     expect(sections[3]).toMatchObject({ label: 'Earlier this week' })
-    expect(contentService.listByRange).toHaveBeenCalledWith({
+    expect(listByRangeMock).toHaveBeenCalledWith({
+      userId: 'user-1',
       sourceType: 'youtube',
       range: '7d',
       limit: 25,

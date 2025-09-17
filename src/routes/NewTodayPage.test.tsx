@@ -4,6 +4,13 @@ import { beforeEach, describe, it, vi } from 'vitest'
 import NewTodayPage from './NewTodayPage'
 import * as feedModule from '../api/feed'
 
+vi.mock('../context/AuthContext', () => ({
+  useAuth: () => ({
+    session: { access_token: 'test-token' },
+    user: { id: 'user-1' },
+  }),
+}))
+
 vi.mock('../api/feed')
 
 const createWrapper =
@@ -73,6 +80,7 @@ describe('NewTodayPage', () => {
                 durationSeconds: null,
                 publishedAt: new Date().toISOString(),
                 timeAgo: '2 hours ago',
+                isSaved: false,
               },
             ],
           },

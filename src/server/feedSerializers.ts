@@ -18,6 +18,7 @@ export interface ContentItemRecord {
   topics: string[] | null
   durationSeconds: number | null
   publishedAt: Date
+  isSaved: boolean
 }
 
 interface SupabaseContentRow {
@@ -53,6 +54,7 @@ export function deserializeContentRow(row: SupabaseContentRow): ContentItemRecor
       : null,
     durationSeconds: row.duration_seconds,
     publishedAt: normalizeDate(row.published_at),
+    isSaved: false,
   }
 }
 
@@ -79,6 +81,7 @@ export interface SerializedFeedItem {
   durationSeconds: number | null
   publishedAt: string
   timeAgo: string
+  isSaved: boolean
 }
 
 export function serializeFeedItem(item: ContentItemRecord, now: Date): SerializedFeedItem {
@@ -96,6 +99,7 @@ export function serializeFeedItem(item: ContentItemRecord, now: Date): Serialize
     durationSeconds: item.durationSeconds,
     publishedAt: item.publishedAt.toISOString(),
     timeAgo: formatRelativeTime(item.publishedAt, now),
+    isSaved: item.isSaved,
   }
 }
 

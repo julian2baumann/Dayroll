@@ -1,5 +1,6 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { useTodayFeedQuery } from '../api/feed'
+import { useSaveToggle } from '../api/save'
 
 const GROUP_ICONS: Record<string, string> = {
   youtube: '▶️',
@@ -223,9 +224,15 @@ function CarouselCard({
     summary: string | null
     description: string | null
     topics: string[] | null
+    isSaved: boolean
   }
   highlight: boolean
 }) {
+  const { toggle, saving } = useSaveToggle(item.id)
+  const handleToggle = () => {
+    toggle(!item.isSaved)
+  }
+
   return (
     <article className="min-w-[min(75vw,320px)] snap-start rounded-2xl border border-white/40 bg-white/90 p-4 shadow-sm transition hover:-translate-y-1 hover:shadow-lg focus-within:-translate-y-1 focus-within:shadow-lg">
       {item.thumbnailUrl ? (
@@ -275,11 +282,13 @@ function CarouselCard({
           </a>
           <button
             type="button"
-            className="inline-flex items-center justify-center rounded-lg border border-indigo-200 bg-white px-3 py-2 text-sm font-medium text-indigo-600 shadow-sm transition hover:bg-indigo-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
-            aria-label="Save for later (coming soon)"
-            disabled
+            onClick={handleToggle}
+            disabled={saving}
+            aria-pressed={item.isSaved}
+            className="inline-flex items-center justify-center rounded-lg border border-indigo-200 bg-white px-3 py-2 text-sm font-medium text-indigo-600 shadow-sm transition hover:bg-indigo-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 disabled:opacity-60"
+            aria-label={item.isSaved ? 'Remove from For Later' : 'Save for Later'}
           >
-            ☆
+            {item.isSaved ? '★' : '☆'}
           </button>
         </div>
       </div>

@@ -22,6 +22,7 @@ export interface TodayFeedItem {
   durationSeconds: number | null
   publishedAt: string
   timeAgo: string
+  isSaved: boolean
 }
 
 export interface TodayFeedResponse {
