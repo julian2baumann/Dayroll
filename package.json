@@ -66,7 +66,6 @@
     "husky": "^9.1.7",
     "jsdom": "^27.0.0",
     "lint-staged": "^16.1.6",
-    "pg-mem": "^3.0.5",
     "playwright": "^1.55.0",
     "postcss": "^8.5.6",
     "prettier": "^3.6.2",
