@@ -7,6 +7,7 @@ test-results
 .vscode
 .env
 .env.*
+!.env.example
 .idea
 *.log
 *.tsbuildinfo
