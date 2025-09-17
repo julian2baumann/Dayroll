@@ -55,6 +55,10 @@ describe('createApp', () => {
         void params
         return []
       }),
+      listRecommendations: vi.fn(async (params: { userId: string; limit: number; now?: Date }) => {
+        void params
+        return []
+      }),
       saveContent: vi.fn(async () => {}),
       removeSavedContent: vi.fn(async () => true),
     }
@@ -603,5 +607,40 @@ describe('createApp', () => {
     expect(payload.items).toHaveLength(1)
     expect(payload.items[0]).toMatchObject({ id: 'saved-1', isSaved: true })
     expect(listSavedMock).toHaveBeenCalledWith({ userId: 'user-1', limit: 25, offset: 0 })
+  })
+
+  it('returns For You recommendations', async () => {
+    const user = {
+      id: 'user-1',
+      email: 'user@example.com',
+      role: 'authenticated',
+      aud: 'authenticated',
+    } as unknown as User
+
+    const records = [
+      createContentItem({ id: 'rec-1', sourceType: 'recommendation', title: 'Curated pick' }),
+    ]
+    const listRecommendationsMock = vi.fn(async () => records)
+
+    const { app } = await setupApp({
+      user,
+      contentOverrides: {
+        listRecommendations: listRecommendationsMock as ContentService['listRecommendations'],
+      },
+    })
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/api/for-you?limit=5',
+      headers: {
+        authorization: 'Bearer token',
+      },
+    })
+
+    expect(response.statusCode).toBe(200)
+    const payload = response.json()
+    expect(payload.items).toHaveLength(1)
+    expect(payload.items[0].title).toBe('Curated pick')
+    expect(listRecommendationsMock).toHaveBeenCalledWith({ userId: 'user-1', limit: 5 })
   })
 })

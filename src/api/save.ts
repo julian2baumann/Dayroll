@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '../context/AuthContext'
 import { ApiError } from './types'
 import type { FeedListResponse, TodayFeedResponse } from './feed'
-import { getTodayFeedQueryKey, isFeedListQueryKey } from './feed'
+import { getTodayFeedQueryKey, getForYouQueryKey, isFeedListQueryKey } from './feed'
 import type { SavedItemsResponse } from './saved'
 import { getSavedItemsQueryKey } from './saved'
 
@@ -169,6 +169,7 @@ export function useSaveToggle(contentItemId: string) {
       void queryClient.invalidateQueries({ queryKey: getTodayFeedQueryKey() })
       void queryClient.invalidateQueries({ queryKey: ['feed-list'] })
       void queryClient.invalidateQueries({ queryKey: getSavedItemsQueryKey() })
+      void queryClient.invalidateQueries({ queryKey: getForYouQueryKey() })
     },
   })
 
@@ -216,6 +217,7 @@ export function useSaveToggle(contentItemId: string) {
       void queryClient.invalidateQueries({ queryKey: getTodayFeedQueryKey() })
       void queryClient.invalidateQueries({ queryKey: ['feed-list'] })
       void queryClient.invalidateQueries({ queryKey: getSavedItemsQueryKey() })
+      void queryClient.invalidateQueries({ queryKey: getForYouQueryKey() })
     },
   })
 

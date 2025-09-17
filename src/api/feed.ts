@@ -136,3 +136,47 @@ export function buildFeedListQueryKey(
 export function getTodayFeedQueryKey() {
   return TODAY_FEED_QUERY_KEY
 }
+
+export interface ForYouResponse {
+  generatedAt: string
+  items: TodayFeedItem[]
+}
+
+const FOR_YOU_QUERY_KEY = ['for-you']
+
+async function fetchForYou(token: string, limit: number): Promise<ForYouResponse> {
+  const params = new URLSearchParams({ limit: String(limit) })
+  const response = await fetch(`/api/for-you?${params.toString()}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+
+  if (!response.ok) {
+    const payload = await response.json().catch(() => ({ error: 'Failed to load For You items' }))
+    const message =
+      typeof payload?.error === 'string' ? payload.error : 'Failed to load For You items'
+    throw new ApiError(message, response.status)
+  }
+
+  return (await response.json()) as ForYouResponse
+}
+
+export function useForYouQuery(limit = 5) {
+  const { session } = useAuth()
+  const token = session?.access_token
+
+  return useQuery({
+    queryKey: [...FOR_YOU_QUERY_KEY, limit],
+    enabled: Boolean(token),
+    queryFn: () => {
+      if (!token) throw new ApiError('Missing auth token', 401)
+      return fetchForYou(token, limit)
+    },
+    staleTime: 60_000,
+  })
+}
+
+export function getForYouQueryKey(limit = 5) {
+  return [...FOR_YOU_QUERY_KEY, limit] as const
+}

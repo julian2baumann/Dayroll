@@ -43,6 +43,7 @@ export interface ContentService {
     limit: number
     offset: number
   }): Promise<SavedContentRecord[]>
+  listRecommendations(params: { userId: string; limit: number }): Promise<ContentItemRecord[]>
   saveContent(userId: string, contentItemId: string): Promise<void>
   removeSavedContent(userId: string, contentItemId: string): Promise<boolean>
 }
@@ -140,6 +141,20 @@ function createSupabaseContentService(client: SupabaseClient): ContentService {
       .filter((value): value is SavedContentRecord => Boolean(value))
   }
 
+  const listRecommendations: ContentService['listRecommendations'] = async ({ userId, limit }) => {
+    void userId
+    const { data, error } = await client
+      .from('content_items')
+      .select('*')
+      .eq('source_type', 'recommendation')
+      .order('published_at', { ascending: false })
+      .limit(limit)
+
+    if (error) throw error
+
+    return (data ?? []).map((item) => deserializeContentRow(item as never))
+  }
+
   const saveContent: ContentService['saveContent'] = async (userId, contentItemId) => {
     const { error } = await client
       .from('saved_items')
@@ -166,6 +181,7 @@ function createSupabaseContentService(client: SupabaseClient): ContentService {
     listToday,
     listByRange,
     listSaved,
+    listRecommendations,
     saveContent,
     removeSavedContent,
   }
@@ -407,6 +423,10 @@ export async function createApp(deps: Partial<Dependencies> = {}) {
     offset: z.coerce.number().int().nonnegative().default(0),
   })
 
+  const forYouQuerySchema = z.object({
+    limit: z.coerce.number().int().positive().max(5).default(5),
+  })
+
   app.post(
     '/api/save/:id',
     {
@@ -548,6 +568,41 @@ export async function createApp(deps: Partial<Dependencies> = {}) {
       reply.send({
         generatedAt: now.toISOString(),
         items: items.map((item) => serializeSavedItem(item, now)),
+      })
+    },
+  )
+
+  app.get(
+    '/api/for-you',
+    {
+      preHandler: (request, reply) =>
+        authenticateRequest(request, reply, {
+          ...dependencies,
+          getSupabaseClient: () => serviceClient,
+        }),
+    },
+    async (request, reply) => {
+      const user = request.supabaseUser
+      if (!user) {
+        reply.code(401).send({ error: 'Unauthorized' })
+        return
+      }
+
+      const parsed = forYouQuerySchema.safeParse(request.query)
+      if (!parsed.success) {
+        reply.code(400).send({ error: 'Invalid query parameters' })
+        return
+      }
+
+      const now = new Date()
+      const items = await contentService.listRecommendations({
+        userId: user.id,
+        limit: parsed.data.limit,
+      })
+
+      reply.send({
+        generatedAt: now.toISOString(),
+        items: items.map((item) => serializeFeedItem(item, now)).slice(0, parsed.data.limit),
       })
     },
   )

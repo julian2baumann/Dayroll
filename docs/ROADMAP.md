@@ -1,6 +1,6 @@
 # ROADMAP.md — Daily Feed Project
 
-_Last updated: 2025-09-17 15:00 UTC_
+_Last updated: 2025-09-17 19:10 UTC_
 
 > Owned by Codex per **AGENTS.md**. Execute sequentially; after each task fast-forward `main`, check items off with commit notes, then continue.
 
@@ -98,7 +98,7 @@ _Last updated: 2025-09-17 15:00 UTC_
     **Definition of Done:** API documented via OpenAPI/README; unit + integration tests hitting in-memory DB; coverage ≥80%.  
     **Test Plan:** API contract tests, DAL mocked tests, Playwright scenario for follow/unfollow.  
     **Artifacts:** Route handlers, request schemas, tests, API docs.
-- [ ] **Task 3.3 — Feed & Save APIs**  
+- [x] **Task 3.3 — Feed & Save APIs** (commit `742abc6` — 2025-09-17)  
        **Rationale:** Serve New Today + range-filtered feeds and Save/Unsave flows aligning with PRD performance budgets.  
        **Acceptance Criteria:**
   - `GET /feed/today` groups rows by type with ≤500ms p95 simulated load (profiling).
@@ -111,7 +111,7 @@ _Last updated: 2025-09-17 15:00 UTC_
 
 ## Milestone 4 — Web App Shell & Onboarding
 
-- [ ] **Task 4.1 — React/Tailwind App Scaffold**  
+- [x] **Task 4.1 — React/Tailwind App Scaffold** (commit `742abc6` — 2025-09-17)  
        **Rationale:** Establish responsive shell, routing, layout primitives, theming, and bottom navigation tabs (New Today, Podcasts, YouTube, News, For You, For Later).  
        **Acceptance Criteria:**
   - App bootstrapped with Vite/Next (choose per stack), Tailwind configured with design tokens.
@@ -120,7 +120,7 @@ _Last updated: 2025-09-17 15:00 UTC_
     **Definition of Done:** Lint/type/test pass; Storybook or UI docs for layout (optional but recommended); responsive snapshots for shell.  
     **Test Plan:** Component unit tests, visual regression via Storybook/Playwright, lint/typecheck.  
     **Artifacts:** App shell components, routing config, Tailwind setup, basic tests, Storybook entries if used.
-- [ ] **Task 4.2 — Onboarding & Source Catalog UI**  
+- [x] **Task 4.2 — Onboarding & Source Catalog UI** (commit `742abc6` — 2025-09-17)  
        **Rationale:** Allow new users to add initial sources and topics, preventing empty feeds per PRD.  
        **Acceptance Criteria:**
   - Multi-step onboarding modal/flow to add YouTube channels, Spotify shows, RSS sources, and topics.
@@ -132,7 +132,7 @@ _Last updated: 2025-09-17 15:00 UTC_
 
 ## Milestone 5 — New Today Experience
 
-- [ ] **Task 5.1 — New Today Carousels UI**  
+- [x] **Task 5.1 — New Today Carousels UI** (commit `742abc6` — 2025-09-17)  
        **Rationale:** Deliver primary daily glance experience with horizontal carousels per content type.  
        **Acceptance Criteria:**
   - Four responsive rows (Podcasts, YouTube, News, For You) with arrow controls/swipe (mobile).
@@ -142,7 +142,7 @@ _Last updated: 2025-09-17 15:00 UTC_
     **Definition of Done:** Visual QA across breakpoints; integration with API data; performance audit shows initial render ≤1.5s p95 using mocked data.  
     **Test Plan:** Component tests (React Testing Library), accessibility checks, Playwright responsive snapshots (mobile/tablet/desktop).  
     **Artifacts:** Carousel components, hooks, CSS, tests, performance notes.
-- [ ] **Task 5.2 — Save for Later Interaction Hooks**  
+- [x] **Task 5.2 — Save for Later Interaction Hooks** (commit `24e9a40` — 2025-09-17)  
        **Rationale:** Support in-context save actions from New Today cards and propagate state.  
        **Acceptance Criteria:**
   - Save/Unsave buttons call API with optimistic updates; handles offline/error fallback.
@@ -153,7 +153,7 @@ _Last updated: 2025-09-17 15:00 UTC_
 
 ## Milestone 6 — Source Tabs & For Later
 
-- [ ] **Task 6.1 — Source Tab List Views**  
+- [x] **Task 6.1 — Source Tab List Views** (commit `7a99ea1` — 2025-09-17)  
        **Rationale:** Provide detailed lists with Today/Yesterday/2-days-ago sections and date filter toggles per PRD.  
        **Acceptance Criteria:**
   - Podcasts/YouTube/News tabs share reusable list component; toggle between last 3 days/last week updates query params.
@@ -162,7 +162,7 @@ _Last updated: 2025-09-17 15:00 UTC_
     **Definition of Done:** Integration tests verifying filter behavior; accessibility audit; metrics logging.  
     **Test Plan:** Component tests for list grouping, Playwright flows across breakpoints, performance measurement script.  
     **Artifacts:** List components, hooks, tests, perf report.
-- [ ] **Task 6.2 — For Later Tab Implementation**  
+- [x] **Task 6.2 — For Later Tab Implementation** (commit `9b19684` — 2025-09-17)  
        **Rationale:** Allow users to review saved items with consistent card spec.  
        **Acceptance Criteria:**
   - For Later tab lists saved items newest-first; supports remove/open actions.
