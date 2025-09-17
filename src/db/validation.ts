@@ -47,6 +47,8 @@ export const subscriptionPayloadSchema = z
     }
   })
 
+export const subscriptionCreateSchema = subscriptionPayloadSchema.omit({ userId: true })
+
 export const contentUpsertInputSchema = z.object({
   id: z.string().uuid().optional(),
   sourceType: z.enum(contentItemSourceType.enumValues),
