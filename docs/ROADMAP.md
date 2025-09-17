@@ -19,7 +19,7 @@ _Last updated: 2025-09-17 15:00 UTC_
 
 ## Milestone 1 — Data Model & Environment
 
-- [ ] **Task 1.1 — Database Schema & Migration Setup**  
+- [x] **Task 1.1 — Database Schema & Migration Setup** (commit `95826d8` — 2025-09-17)  
        **Rationale:** Define tables per PRD (users, sources, content_items, user_subscriptions, saved_items, tts_assets, etc.) to unblock ingestion and API work.  
        **Acceptance Criteria:**
   - Migration system (Prisma, Drizzle, or Knex) configured with forward/back commands.
@@ -29,7 +29,7 @@ _Last updated: 2025-09-17 15:00 UTC_
     **Definition of Done:** Running migrations on empty DB succeeds; rollback tested; documentation added to README.  
     **Test Plan:** Execute migration apply/rollback, run schema lint (if available), run seed script, unit tests for schema helpers (if applicable).  
     **Artifacts:** Migration files, schema model definitions, seed script, `.env.example` updates, README instructions.
-- [ ] **Task 1.2 — Data Access Layer & Validation Utilities**  
+- [x] **Task 1.2 — Data Access Layer & Validation Utilities** (commit `e4db88d` — 2025-09-17)  
        **Rationale:** Provide typed repos/services for creating/upserting content, enforcing dedupe, and handling date windows to be shared by jobs and API.  
        **Acceptance Criteria:**
   - DAL abstracts CRUD with TypeScript types; includes dedupe hashing helper and date range queries (today/3d/7d).
