@@ -68,7 +68,7 @@ _Last updated: 2025-09-17 15:00 UTC_
     **Definition of Done:** Job runs locally against mock data; integration test using nock/recorded fixtures; metrics for failures.  
     **Test Plan:** Unit tests for auth/token refresh and mappers, integration job test, run coverage.  
     **Artifacts:** Spotify client module, ingestion worker, tests, env docs for client id/secret.
-- [ ] **Task 2.4 — Ingestion Orchestration & Scheduling**  
+- [x] **Task 2.4 — Ingestion Orchestration & Scheduling** (commit `03d23a0` — 2025-09-17)  
        **Rationale:** Coordinate RSS/YouTube/Spotify jobs with cron, dedupe, and monitoring for production readiness.  
        **Acceptance Criteria:**
   - Shared scheduler script registers jobs with cadence per source type.

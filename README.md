@@ -38,6 +38,34 @@ This repository hosts the Daily Feed web application described in `PRD.md`. The 
 - Playwright end-to-end tests reside in `e2e/` and reuse the production preview build.
 - Husky pre-commit hook enforces staged formatting, lint, and Vitest.
 
+## Ingestion Jobs
+
+- Orchestration lives in `src/ingest/orchestrator.ts`. `runIngestionCycle` pulls active subscriptions and dispatches to RSS, YouTube, and Spotify workers using the shared DAL, while `createIngestionScheduler` wraps the cycle in a safe interval runner.
+- Implement `SubscriptionRepository` (`src/db/dal/subscriptionRepository.ts`) to expose active subscriptions from your database.
+- Provide provider-specific options when wiring the job (YouTube API key, Spotify client credentials, RSS fetch config).
+- Example wiring:
+
+  ```ts
+  import { runIngestionCycle, createIngestionScheduler } from './src/ingest/orchestrator'
+  import { createContentRepository } from './src/db/dal/contentRepository'
+
+  const subscriptionRepo = /* your implementation */
+  const contentRepo = createContentRepository(/* drizzle db */)
+
+  const runCycle = () =>
+    runIngestionCycle(subscriptionRepo, contentRepo, {
+      youtube: { apiKey: process.env.YT_API_KEY },
+      spotify: {
+        credentials: {
+          clientId: process.env.SPOTIFY_CLIENT_ID!,
+          clientSecret: process.env.SPOTIFY_CLIENT_SECRET!,
+        },
+      },
+    })
+
+  createIngestionScheduler(runCycle, { intervalMs: 15 * 60 * 1000 }).start()
+  ```
+
 ## Database & Migrations
 
 Dayroll uses Postgres with Drizzle ORM migrations.
