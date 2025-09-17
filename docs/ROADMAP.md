@@ -80,7 +80,7 @@ _Last updated: 2025-09-17 15:00 UTC_
 
 ## Milestone 3 — Backend API & Auth
 
-- [ ] **Task 3.1 — Supabase Auth Integration & User Session Handling**  
+- [x] **Task 3.1 — Supabase Auth Integration & User Session Handling** (commit `85585b9` — 2025-09-17)  
        **Rationale:** Provide email-based auth with secure session handling to gate personalized feeds.  
        **Acceptance Criteria:**
   - Supabase client/server wiring with magic link flow; protected routes require auth.
