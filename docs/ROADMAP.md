@@ -50,7 +50,7 @@ _Last updated: 2025-09-17 15:00 UTC_
     **Definition of Done:** Automated job script runnable locally and via cron entry; unit tests for parser + integration test using mock RSS feed.  
     **Test Plan:** Unit tests for parser, integration test hitting local mock server, run job end-to-end against sample feeds.  
     **Artifacts:** RSS service module, job scheduler config, tests, documentation of cron cadence/ENV.
-- [ ] **Task 2.2 — YouTube Ingestor Service**  
+- [x] **Task 2.2 — YouTube Ingestor Service** (commit `795ec17` — 2025-09-17)  
        **Rationale:** Populate daily feed with latest channel uploads per PRD using YouTube Data API.  
        **Acceptance Criteria:**
   - Fetches uploads playlist items per subscribed channel with quota-aware pagination.
