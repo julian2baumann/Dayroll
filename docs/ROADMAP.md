@@ -6,7 +6,7 @@ _Last updated: 2025-09-17 15:00 UTC_
 
 ## Milestone 0 — Tooling & Baseline
 
-- [ ] **Task 0.1 — Repository Toolchain Bootstrap**  
+- [x] **Task 0.1 — Repository Toolchain Bootstrap** (PR [#1](https://github.com/julian2baumann/Dayroll/pull/1) — 2025-09-17)  
        **Rationale:** Establish consistent Node/React/TS workspace, CI scripts, and Playwright/Jest scaffolding to support all subsequent work.  
        **Acceptance Criteria:**
   - `package.json` defines scripts for `ci`, `lint`, `format`, `typecheck`, `test`, `e2e`.
