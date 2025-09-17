@@ -59,7 +59,7 @@ _Last updated: 2025-09-17 15:00 UTC_
     **Definition of Done:** Local run ingests fixtures into DB; unit tests for API mapper; integration test using recorded responses; monitoring hooks for quota usage.  
     **Test Plan:** Mock YouTube API in tests, run job locally, verify DB entries, run lint/typecheck.  
     **Artifacts:** YouTube job module, API client wrapper, fixtures, tests, doc on API key setup.
-- [ ] **Task 2.3 — Spotify Podcast Ingestor Service**  
+- [x] **Task 2.3 — Spotify Podcast Ingestor Service** (commit `d804123` — 2025-09-17)  
        **Rationale:** Fetch new podcast episodes via client credentials to satisfy PRD's podcast requirements.  
        **Acceptance Criteria:**
   - Auth flow obtains/refreshes access token, caches until expiry.
