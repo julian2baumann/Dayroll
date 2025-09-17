@@ -89,7 +89,7 @@ _Last updated: 2025-09-17 15:00 UTC_
     **Definition of Done:** Auth endpoints documented; local env instructions; end-to-end sign-in covered by Playwright smoke.  
     **Test Plan:** Unit tests for auth guard, integration test with Supabase emulator or mocks, Playwright sign-in flow.  
     **Artifacts:** Auth modules, route guards, tests, README auth section.
-- [ ] **Task 3.2 — Subscription Management API**  
+- [x] **Task 3.2 — Subscription Management API** (commit `8e1d599` — 2025-09-17)  
        **Rationale:** Enable follow/unfollow workflows for YouTube, Spotify, RSS per FR1.  
        **Acceptance Criteria:**
   - `GET /subscriptions`, `POST /subscriptions`, `DELETE /subscriptions/:id` implemented with validation.
