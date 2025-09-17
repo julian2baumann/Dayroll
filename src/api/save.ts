@@ -3,6 +3,8 @@ import { useAuth } from '../context/AuthContext'
 import { ApiError } from './types'
 import type { FeedListResponse, TodayFeedResponse } from './feed'
 import { getTodayFeedQueryKey, isFeedListQueryKey } from './feed'
+import type { SavedItemsResponse } from './saved'
+import { getSavedItemsQueryKey } from './saved'
 
 async function mutateSave(token: string, contentItemId: string) {
   const response = await fetch(`/api/save/${contentItemId}`, {
@@ -86,6 +88,31 @@ function updateFeedLists(
   }
 }
 
+function updateSavedItems(
+  queryClient: ReturnType<typeof useQueryClient>,
+  contentItemId: string,
+  saved: boolean,
+) {
+  const queries = queryClient.getQueriesData<SavedItemsResponse | undefined>({
+    queryKey: ['saved-items'],
+  })
+
+  for (const [key, value] of queries) {
+    if (!Array.isArray(key) || key[0] !== 'saved-items') continue
+    if (!value) continue
+
+    if (saved) {
+      // optimistic add handled via invalidation later; skip
+      continue
+    }
+
+    queryClient.setQueryData(key, {
+      ...value,
+      items: value.items.filter((item) => item.id !== contentItemId),
+    })
+  }
+}
+
 export function useSaveToggle(contentItemId: string) {
   const { session } = useAuth()
   const token = session?.access_token
@@ -94,6 +121,7 @@ export function useSaveToggle(contentItemId: string) {
   type MutationContext = {
     todaySnapshot: TodayFeedResponse | undefined
     listSnapshots: Array<{ key: unknown; value: FeedListResponse | undefined }>
+    savedSnapshot: Array<[unknown, SavedItemsResponse | undefined]>
   }
 
   const saveMutation = useMutation<void, ApiError, void, MutationContext>({
@@ -113,7 +141,12 @@ export function useSaveToggle(contentItemId: string) {
         .map(([key, value]) => ({ key, value }))
       updateTodayFeed(queryClient, contentItemId, true)
       updateFeedLists(queryClient, contentItemId, true)
-      return { todaySnapshot, listSnapshots }
+      const savedSnapshot = queryClient.getQueriesData<SavedItemsResponse | undefined>({
+        queryKey: ['saved-items'],
+      })
+      updateTodayFeed(queryClient, contentItemId, true)
+      updateFeedLists(queryClient, contentItemId, true)
+      return { todaySnapshot, listSnapshots, savedSnapshot }
     },
     onError: (_error, _variables, context) => {
       if (context?.todaySnapshot !== undefined) {
@@ -126,10 +159,16 @@ export function useSaveToggle(contentItemId: string) {
           }
         }
       }
+      if (context?.savedSnapshot) {
+        for (const [key, value] of context.savedSnapshot) {
+          queryClient.setQueryData(key, value)
+        }
+      }
     },
     onSettled: () => {
       void queryClient.invalidateQueries({ queryKey: getTodayFeedQueryKey() })
       void queryClient.invalidateQueries({ queryKey: ['feed-list'] })
+      void queryClient.invalidateQueries({ queryKey: getSavedItemsQueryKey() })
     },
   })
 
@@ -148,9 +187,13 @@ export function useSaveToggle(contentItemId: string) {
       const listSnapshots = queryClient
         .getQueriesData<FeedListResponse | undefined>({ queryKey: ['feed-list'] })
         .map(([key, value]) => ({ key, value }))
+      const savedSnapshot = queryClient.getQueriesData<SavedItemsResponse | undefined>({
+        queryKey: ['saved-items'],
+      })
       updateTodayFeed(queryClient, contentItemId, false)
       updateFeedLists(queryClient, contentItemId, false)
-      return { todaySnapshot, listSnapshots }
+      updateSavedItems(queryClient, contentItemId, false)
+      return { todaySnapshot, listSnapshots, savedSnapshot }
     },
     onError: (_error, _variables, context) => {
       if (context?.todaySnapshot !== undefined) {
@@ -163,10 +206,16 @@ export function useSaveToggle(contentItemId: string) {
           }
         }
       }
+      if (context?.savedSnapshot) {
+        for (const [key, value] of context.savedSnapshot) {
+          queryClient.setQueryData(key, value)
+        }
+      }
     },
     onSettled: () => {
       void queryClient.invalidateQueries({ queryKey: getTodayFeedQueryKey() })
       void queryClient.invalidateQueries({ queryKey: ['feed-list'] })
+      void queryClient.invalidateQueries({ queryKey: getSavedItemsQueryKey() })
     },
   })
 

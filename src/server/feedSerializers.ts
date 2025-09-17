@@ -21,6 +21,10 @@ export interface ContentItemRecord {
   isSaved: boolean
 }
 
+export interface SavedContentRecord extends ContentItemRecord {
+  savedAt: Date
+}
+
 interface SupabaseContentRow {
   id: string
   source_type: SourceType
@@ -100,6 +104,17 @@ export function serializeFeedItem(item: ContentItemRecord, now: Date): Serialize
     publishedAt: item.publishedAt.toISOString(),
     timeAgo: formatRelativeTime(item.publishedAt, now),
     isSaved: item.isSaved,
+  }
+}
+
+export interface SerializedSavedItem extends SerializedFeedItem {
+  savedAt: string
+}
+
+export function serializeSavedItem(item: SavedContentRecord, now: Date): SerializedSavedItem {
+  return {
+    ...serializeFeedItem(item, now),
+    savedAt: item.savedAt.toISOString(),
   }
 }
 

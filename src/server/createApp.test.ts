@@ -3,7 +3,11 @@ import type { SupabaseClient, User } from '@supabase/supabase-js'
 import type { Subscription } from '../db/schema'
 import type { SubscriptionRepository } from '../db/dal/subscriptionRepository'
 import { createApp, type ContentService } from './createApp'
-import { emptyContentGroups, type ContentItemRecord } from './feedSerializers'
+import {
+  emptyContentGroups,
+  type ContentItemRecord,
+  type SavedContentRecord,
+} from './feedSerializers'
 
 describe('createApp', () => {
   const buildMockClient = (user: User | null, shouldError = false) => {
@@ -47,6 +51,10 @@ describe('createApp', () => {
           return [] as ContentItemRecord[]
         },
       ),
+      listSaved: vi.fn(async (params: { userId: string; limit: number; offset: number }) => {
+        void params
+        return []
+      }),
       saveContent: vi.fn(async () => {}),
       removeSavedContent: vi.fn(async () => true),
     }
@@ -68,6 +76,13 @@ describe('createApp', () => {
     durationSeconds: null,
     publishedAt: new Date('2025-09-17T08:00:00Z'),
     isSaved: false,
+    ...overrides,
+  })
+
+  const createSavedRecord = (overrides: Partial<SavedContentRecord> = {}): SavedContentRecord => ({
+    ...createContentItem(overrides),
+    isSaved: true,
+    savedAt: new Date('2025-09-17T10:00:00Z'),
     ...overrides,
   })
 
@@ -548,5 +563,45 @@ describe('createApp', () => {
       },
     })
     expect(notFoundResponse.statusCode).toBe(404)
+  })
+
+  it('returns saved items for For Later tab', async () => {
+    const user = {
+      id: 'user-1',
+      email: 'user@example.com',
+      role: 'authenticated',
+      aud: 'authenticated',
+    } as unknown as User
+
+    const savedRecords = [
+      createSavedRecord({
+        id: 'saved-1',
+        title: 'Saved article',
+        sourceType: 'news',
+      }),
+    ]
+
+    const listSavedMock = vi.fn(async () => savedRecords)
+
+    const { app } = await setupApp({
+      user,
+      contentOverrides: {
+        listSaved: listSavedMock as ContentService['listSaved'],
+      },
+    })
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/api/save?limit=25&offset=0',
+      headers: {
+        authorization: 'Bearer token',
+      },
+    })
+
+    expect(response.statusCode).toBe(200)
+    const payload = response.json()
+    expect(payload.items).toHaveLength(1)
+    expect(payload.items[0]).toMatchObject({ id: 'saved-1', isSaved: true })
+    expect(listSavedMock).toHaveBeenCalledWith({ userId: 'user-1', limit: 25, offset: 0 })
   })
 })

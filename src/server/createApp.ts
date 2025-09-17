@@ -13,6 +13,8 @@ import {
   emptyContentGroups,
   serializeFeedItem,
   type ContentItemRecord,
+  type SavedContentRecord,
+  serializeSavedItem,
 } from './feedSerializers'
 
 declare module 'fastify' {
@@ -36,6 +38,11 @@ export interface ContentService {
     offset: number
     now?: Date
   }): Promise<ContentItemRecord[]>
+  listSaved(params: {
+    userId: string
+    limit: number
+    offset: number
+  }): Promise<SavedContentRecord[]>
   saveContent(userId: string, contentItemId: string): Promise<void>
   removeSavedContent(userId: string, contentItemId: string): Promise<boolean>
 }
@@ -102,6 +109,37 @@ function createSupabaseContentService(client: SupabaseClient): ContentService {
     return (data ?? []).map((item) => markSaved(deserializeContentRow(item as never), savedIds))
   }
 
+  const listSaved: ContentService['listSaved'] = async ({ userId, limit, offset }) => {
+    const { data, error } = await client
+      .from('saved_items')
+      .select('content_item_id, saved_at, content_items(*)')
+      .eq('user_id', userId)
+      .order('saved_at', { ascending: false })
+      .range(offset, offset + limit - 1)
+
+    if (error) throw error
+
+    const rows = data ?? []
+
+    return rows
+      .map((row) => {
+        const nested = (row as Record<string, unknown>).content_items as Record<
+          string,
+          unknown
+        > | null
+        if (!nested) return null
+        const record = markSaved(
+          deserializeContentRow(nested as never),
+          new Set([row.content_item_id]),
+        )
+        return {
+          ...record,
+          savedAt: row.saved_at ? new Date(row.saved_at as string) : new Date(),
+        }
+      })
+      .filter((value): value is SavedContentRecord => Boolean(value))
+  }
+
   const saveContent: ContentService['saveContent'] = async (userId, contentItemId) => {
     const { error } = await client
       .from('saved_items')
@@ -127,6 +165,7 @@ function createSupabaseContentService(client: SupabaseClient): ContentService {
   return {
     listToday,
     listByRange,
+    listSaved,
     saveContent,
     removeSavedContent,
   }
@@ -363,6 +402,10 @@ export async function createApp(deps: Partial<Dependencies> = {}) {
   )
 
   const deleteParamsSchema = z.object({ id: z.string().uuid() })
+  const savedListQuerySchema = z.object({
+    limit: z.coerce.number().int().positive().max(200).default(50),
+    offset: z.coerce.number().int().nonnegative().default(0),
+  })
 
   app.post(
     '/api/save/:id',
@@ -470,6 +513,42 @@ export async function createApp(deps: Partial<Dependencies> = {}) {
         void _error
         reply.code(404).send({ error: 'Subscription not found' })
       }
+    },
+  )
+
+  app.get(
+    '/api/save',
+    {
+      preHandler: (request, reply) =>
+        authenticateRequest(request, reply, {
+          ...dependencies,
+          getSupabaseClient: () => serviceClient,
+        }),
+    },
+    async (request, reply) => {
+      const user = request.supabaseUser
+      if (!user) {
+        reply.code(401).send({ error: 'Unauthorized' })
+        return
+      }
+
+      const query = savedListQuerySchema.safeParse(request.query)
+      if (!query.success) {
+        reply.code(400).send({ error: 'Invalid query parameters' })
+        return
+      }
+
+      const now = new Date()
+      const items = await contentService.listSaved({
+        userId: user.id,
+        limit: query.data.limit,
+        offset: query.data.offset,
+      })
+
+      reply.send({
+        generatedAt: now.toISOString(),
+        items: items.map((item) => serializeSavedItem(item, now)),
+      })
     },
   )
 
