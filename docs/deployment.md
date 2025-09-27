@@ -46,6 +46,25 @@ Populate the following secrets in GitHub Actions. The same keys are also exposed
 
 > If a backend secret is omitted, the script defaults to Railway with the corresponding IDs. Render support kicks in when `BACKEND_*_TARGET=render`.
 
+### Frontend (Vercel) Environment Variables
+
+| Variable                 | Environment | Description                                                                  |
+| ------------------------ | ----------- | ---------------------------------------------------------------------------- |
+| `VITE_SUPABASE_URL`      | frontend    | Supabase project URL exposed to the browser.                                 |
+| `VITE_SUPABASE_ANON_KEY` | frontend    | Browser-safe Supabase anon key.                                              |
+| `VITE_API_BASE_URL`      | frontend    | API origin (e.g. `https://dayroll-production.up.railway.app`).               |
+| `VITE_DEMO_MODE`         | frontend    | Set to `false` for staging/production so the UI uses the live API responses. |
+
+### Backend (Railway/Render) Environment Variables
+
+In addition to database and Supabase credentials, ensure the following provider keys are configured:
+
+- `YT_API_KEY`
+- `SPOTIFY_CLIENT_ID`
+- `SPOTIFY_CLIENT_SECRET`
+
+These are required for `npm run ingest:run` and scheduled ingestion jobs to fetch fresh content.
+
 ## Deployment Scripts
 
 `scripts/deploy/frontendDeploy.ts`

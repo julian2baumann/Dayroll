@@ -21,6 +21,7 @@ This repository hosts the Daily Feed web application described in `PRD.md`. The 
 
 - Set `VITE_DEMO_MODE=true` (for example in `.env.local`) to auto-authenticate against a mock Supabase session and serve canned API responses while developing the UI.
 - Remove the flag and supply real Supabase credentials before deploying to shared environments.
+- When you connect to the production backend, set `VITE_DEMO_MODE=false` and provide `VITE_API_BASE_URL` pointing at the deployed API host (e.g. `https://dayroll-production.up.railway.app`).
 
 ## Supabase Configuration
 
@@ -29,6 +30,7 @@ This repository hosts the Daily Feed web application described in `PRD.md`. The 
   - `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY` are used by server-side code and background jobs.
 - After setting the values, restart the dev server so Vite picks up the new environment variables.
 - Add `${APP_URL}/auth/callback` (for each environment) to **Authentication → URL Configuration → Redirect URLs** in Supabase so magic links land on the callback handler.
+- Configure `VITE_API_BASE_URL` in `.env` / platform env vars so the frontend targets the deployed API. Leave it blank during local demo mode; set it to the Railway URL (`https://dayroll-production.up.railway.app`) for staging/production.
 
 ## Scripts
 
@@ -106,6 +108,8 @@ This repository hosts the Daily Feed web application described in `PRD.md`. The 
 
   createIngestionScheduler(runCycle, { intervalMs: 15 * 60 * 1000 }).start()
   ```
+
+- Run `npm run ingest:run` (with `DATABASE_URL`, `SUPABASE_*`, `YT_API_KEY`, `SPOTIFY_CLIENT_ID`, and `SPOTIFY_CLIENT_SECRET` set) to execute a one-off ingestion cycle after provisioning subscriptions.
 
 ## Listen Service
 

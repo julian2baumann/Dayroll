@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '../context/AuthContext'
 import type { Subscription, SubscriptionResponse } from './types'
 import { ApiError, mapSubscriptionResponse } from './types'
+import { getApiUrl } from '../lib/env'
 
 const SUBSCRIPTIONS_QUERY_KEY = ['subscriptions']
 
@@ -11,7 +12,8 @@ async function request<T>(
   input: RequestInfo | URL,
   init: RequestInit = {},
 ): Promise<T> {
-  const response = await fetch(input, {
+  const target = typeof input === 'string' ? getApiUrl(input) : input
+  const response = await fetch(target, {
     ...init,
     headers: {
       'Content-Type': 'application/json',

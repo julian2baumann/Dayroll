@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '../context/AuthContext'
 import { ApiError } from './types'
+import { getApiUrl } from '../lib/env'
 
 export type TodayFeedGroup = {
   type: 'youtube' | 'podcast' | 'news' | 'recommendation'
@@ -44,7 +45,7 @@ const TODAY_FEED_QUERY_KEY = ['today-feed']
 const FEED_LIST_QUERY_KEY = ['feed-list']
 
 async function fetchTodayFeed(token: string): Promise<TodayFeedResponse> {
-  const response = await fetch('/api/feed/today', {
+  const response = await fetch(getApiUrl('/api/feed/today'), {
     headers: {
       Authorization: `Bearer ${token}`,
     },
@@ -82,7 +83,7 @@ async function fetchFeedList(
   offset: number,
 ): Promise<FeedListResponse> {
   const params = new URLSearchParams({ range, limit: String(limit), offset: String(offset) })
-  const response = await fetch(`/api/feed/${type}?${params.toString()}`, {
+  const response = await fetch(getApiUrl(`/api/feed/${type}?${params.toString()}`), {
     headers: {
       Authorization: `Bearer ${token}`,
     },
@@ -146,7 +147,7 @@ const FOR_YOU_QUERY_KEY = ['for-you']
 
 async function fetchForYou(token: string, limit: number): Promise<ForYouResponse> {
   const params = new URLSearchParams({ limit: String(limit) })
-  const response = await fetch(`/api/for-you?${params.toString()}`, {
+  const response = await fetch(getApiUrl(`/api/for-you?${params.toString()}`), {
     headers: {
       Authorization: `Bearer ${token}`,
     },

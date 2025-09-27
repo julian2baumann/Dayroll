@@ -3,11 +3,12 @@ import { useAuth } from '../context/AuthContext'
 import { ApiError } from './types'
 import type { FeedListResponse, TodayFeedResponse } from './feed'
 import { getTodayFeedQueryKey, getForYouQueryKey, isFeedListQueryKey } from './feed'
+import { getApiUrl } from '../lib/env'
 import type { SavedItemsResponse } from './saved'
 import { getSavedItemsQueryKey } from './saved'
 
 async function mutateSave(token: string, contentItemId: string) {
-  const response = await fetch(`/api/save/${contentItemId}`, {
+  const response = await fetch(getApiUrl(`/api/save/${contentItemId}`), {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${token}`,
@@ -21,7 +22,7 @@ async function mutateSave(token: string, contentItemId: string) {
 }
 
 async function mutateUnsave(token: string, contentItemId: string) {
-  const response = await fetch(`/api/save/${contentItemId}`, {
+  const response = await fetch(getApiUrl(`/api/save/${contentItemId}`), {
     method: 'DELETE',
     headers: {
       Authorization: `Bearer ${token}`,

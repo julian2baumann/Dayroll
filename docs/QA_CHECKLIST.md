@@ -7,6 +7,7 @@ Use this checklist for pre-release validation after automated suites complete. R
 - [ ] `.env` populated (Supabase, API keys, Listen provider or demo mode).
 - [ ] Telemetry exporter configured (`TELEMETRY_EXPORT_URL`) or exporter disabled for manual run.
 - [ ] Demo mode flag reviewed (`VITE_DEMO_MODE`) — disable for staging/prod validation.
+- [ ] `VITE_API_BASE_URL` points to the live API host when validating staging/production builds.
 
 ## 1. Authentication & Onboarding
 
@@ -19,6 +20,7 @@ Use this checklist for pre-release validation after automated suites complete. R
 ## 2. New Today
 
 - [ ] Four carousels render with provider-specific labelling and thumbnails.
+- [ ] Live content appears after running ingestion (no placeholder/demo data).
 - [ ] Swiping/arrow navigation works across breakpoints; keyboard arrows and focus rings present.
 - [ ] Empty state copy shown when a content type lacks items.
 - [ ] Performance budget verified: initial load ≤ **1.5 s p95** (Lighthouse or Web Vitals panel).

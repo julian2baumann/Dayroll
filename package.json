@@ -24,7 +24,14 @@
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "db:seed": "tsx src/db/seed.ts",
-    "server": "tsx src/server/index.ts"
+    "server": "tsx src/server/index.ts",
+    "listen:cleanup": "tsx src/listen/cleanupJob.ts",
+    "ingest:run": "tsx scripts/ingest/runOnce.ts",
+    "perf:feed": "tsx scripts/perf/runFeedLoadTest.ts",
+    "telemetry:aggregate": "tsx scripts/perf/aggregateTelemetry.ts",
+    "deploy:frontend": "tsx scripts/deploy/frontendDeploy.ts --prod",
+    "deploy:backend": "tsx scripts/deploy/backendDeploy.ts",
+    "deploy": "npm run deploy:frontend && npm run deploy:backend"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx,json,css,md}": [
@@ -36,17 +43,19 @@
   },
   "dependencies": {
     "@fastify/cors": "^11.1.0",
+    "@mozilla/readability": "^0.6.0",
     "@supabase/supabase-js": "^2.57.4",
     "@tanstack/react-query": "^5.62.9",
     "dotenv": "^17.2.2",
     "drizzle-orm": "^0.44.5",
     "fast-xml-parser": "^5.2.5",
     "fastify": "^5.6.0",
-    "react-router-dom": "^6.28.0",
     "p-retry": "^7.0.0",
     "pg": "^8.16.3",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
+    "react-router-dom": "^6.28.0",
+    "web-vitals": "^4.2.4",
     "zod": "^4.1.9"
   },
   "devDependencies": {
@@ -62,6 +71,7 @@
     "@typescript-eslint/parser": "^8.44.0",
     "@vitejs/plugin-react": "^5.0.0",
     "@vitest/coverage-v8": "^3.2.4",
+    "autocannon": "^8.0.0",
     "autoprefixer": "^10.4.21",
     "drizzle-kit": "^0.28.1",
     "eslint": "^9.33.0",

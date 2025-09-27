@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '../context/AuthContext'
 import { ApiError } from './types'
 import type { TodayFeedItem } from './feed'
+import { getApiUrl } from '../lib/env'
 
 export interface SavedFeedItem extends TodayFeedItem {
   savedAt: string
@@ -22,7 +23,7 @@ async function fetchSavedItems(
     limit: String(params.limit),
     offset: String(params.offset),
   })
-  const response = await fetch(`/api/save?${search.toString()}`, {
+  const response = await fetch(getApiUrl(`/api/save?${search.toString()}`), {
     headers: {
       Authorization: `Bearer ${token}`,
     },

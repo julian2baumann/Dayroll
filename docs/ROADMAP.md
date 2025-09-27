@@ -262,3 +262,11 @@ _(2025-09-18)_ Demo mode added: Vite flag `VITE_DEMO_MODE` seeds client-side aut
      **Definition of Done:** Manual verification on staging confirms magic-link sign-in flows into onboarding across desktop/tablet/mobile; regression tests stay green.  
      **Test Plan:** `npm run lint`, `npm run format`, `npm run typecheck`, `npm test`, `npm run e2e`.  
      **Artifacts:** New `AuthCallbackPage`, updated auth redirect, roadmap/README notes.
+- [ ] **Task 10.2 — Production Data Pipeline Enablement**  
+       **Rationale:** Switch the hosted Vercel build from demo-mode mocks to the live API/ingestion stack so onboarding choices populate real feeds.  
+       **Acceptance Criteria:**
+  - Vercel environment variables include `VITE_API_BASE_URL=https://dayroll-production.up.railway.app` and provider flags (`VITE_DEMO_MODE=false`).
+  - Railway service configured with `YT_API_KEY`, `SPOTIFY_CLIENT_ID`, `SPOTIFY_CLIENT_SECRET`, and RSS catalog seeds; ingestion jobs run successfully.
+  - Visiting `dayroll.vercel.app` after onboarding surfaces real content pulled from Supabase (no empty mocks).  
+     **Definition of Done:** Frontend and backend redeployed, ingestion job seeded, manual smoke verifies populated carousels/tabs, and documentation updated.  
+     **Test Plan:** `npm run lint`, `npm run format`, `npm run typecheck`, `npm test`, `npm run e2e`, plus manual ingestion run + production smoke.
