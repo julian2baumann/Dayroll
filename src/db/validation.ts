@@ -20,7 +20,7 @@ export const subscriptionPayloadSchema = z
     sourceType: z.enum(subscriptionSourceType.enumValues),
     sourceId: trimString(),
     sourceName: trimString().max(160),
-    metadata: z.record(z.any()).optional(),
+    metadata: z.record(z.any()).optional().nullable(),
   })
   .superRefine((payload, ctx) => {
     const { sourceType, sourceId } = payload
