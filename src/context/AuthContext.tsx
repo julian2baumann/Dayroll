@@ -2,6 +2,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import type { Session, User } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabaseClient'
+import { isDemoMode } from '../lib/env'
 
 interface AuthContextValue {
   user: User | null
@@ -13,12 +14,55 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined)
 
+const demoMode = isDemoMode
+
+function createDemoUser(email = 'demo@dayroll.test'): User {
+  const timestamp = new Date().toISOString()
+  return {
+    id: 'demo-user',
+    app_metadata: { provider: 'email', providers: ['email'] },
+    user_metadata: { demo: true, email },
+    aud: 'authenticated',
+    email,
+    phone: '',
+    created_at: timestamp,
+    confirmed_at: timestamp,
+    email_confirmed_at: timestamp,
+    last_sign_in_at: timestamp,
+    updated_at: timestamp,
+    role: 'authenticated',
+    identities: [],
+    factors: [],
+  }
+}
+
+function createDemoSession(user: User): Session {
+  return {
+    access_token: 'demo-access-token',
+    refresh_token: 'demo-refresh-token',
+    expires_in: 60 * 60,
+    expires_at: Math.floor(Date.now() / 1000) + 60 * 60,
+    token_type: 'bearer',
+    provider_token: null,
+    provider_refresh_token: null,
+    user,
+  }
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    if (demoMode) {
+      const demoUser = createDemoUser()
+      setUser(demoUser)
+      setSession(createDemoSession(demoUser))
+      setLoading(false)
+      return
+    }
+
     let mounted = true
 
     const init = async () => {
@@ -31,7 +75,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(false)
     }
 
-    init()
+    void init()
 
     const {
       data: { subscription },
@@ -47,9 +91,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const signInWithEmail = useCallback(async (email: string) => {
+    if (demoMode) {
+      const demoUser = createDemoUser(email)
+      setUser(demoUser)
+      setSession(createDemoSession(demoUser))
+      setLoading(false)
+      return {}
+    }
+
+    const redirectTo =
+      typeof window !== 'undefined' ? `${window.location.origin}/auth/callback` : undefined
+
     const { error } = await supabase.auth.signInWithOtp({
       email,
-      options: { emailRedirectTo: window.location.href },
+      options: redirectTo ? { emailRedirectTo: redirectTo } : undefined,
     })
     if (error) {
       return { error: error.message }
@@ -58,6 +113,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const signOut = useCallback(async () => {
+    if (demoMode) {
+      setUser(null)
+      setSession(null)
+      return
+    }
     await supabase.auth.signOut()
   }, [])
 

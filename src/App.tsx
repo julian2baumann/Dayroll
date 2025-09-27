@@ -4,6 +4,7 @@ import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClient } from './lib/queryClient'
 import { useAuth } from './context/AuthContext'
 import AppLayout from './routes/AppLayout'
+import AuthCallbackPage from './routes/AuthCallbackPage'
 import NewTodayPage from './routes/NewTodayPage'
 import PodcastsPage from './routes/PodcastsPage'
 import YouTubePage from './routes/YouTubePage'
@@ -238,11 +239,23 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        {user ? (
-          <AuthenticatedApp onSignOut={() => signOut()} userEmail={user.email} userId={user.id} />
-        ) : (
-          <UnauthenticatedLanding onSignIn={signInWithEmail} />
-        )}
+        <Routes>
+          <Route path="/auth/callback" element={<AuthCallbackPage />} />
+          <Route
+            path="/*"
+            element={
+              user ? (
+                <AuthenticatedApp
+                  onSignOut={() => signOut()}
+                  userEmail={user.email}
+                  userId={user.id}
+                />
+              ) : (
+                <UnauthenticatedLanding onSignIn={signInWithEmail} />
+              )
+            }
+          />
+        </Routes>
       </BrowserRouter>
     </QueryClientProvider>
   )

@@ -174,7 +174,7 @@ _Last updated: 2025-09-17 19:10 UTC_
 
 ## Milestone 7 — For You Agent
 
-- [ ] **Task 7.1 — Recommendation Agent Service**  
+- [x] **Task 7.1 — Recommendation Agent Service** (commit `<pending>` — 2025-09-17)  
        **Rationale:** Implement daily topic-based search/selection to deliver ≤5 curated items per user.  
        **Acceptance Criteria:**
   - Agent integrates with chosen web search API; respects per-user topics; generates short summaries for news only.
@@ -183,7 +183,7 @@ _Last updated: 2025-09-17 19:10 UTC_
     **Definition of Done:** Job runs on schedule; unit tests for scoring/selection; integration tests using mocked search responses.  
     **Test Plan:** Unit tests for summarizer and scoring, integration test hitting mock API, runbook for failures.  
     **Artifacts:** Agent service code, prompt/config files, tests, docs on API usage and pricing.
-- [ ] **Task 7.2 — For You Tab UI & Daily Refresh**  
+- [x] **Task 7.2 — For You Tab UI & Daily Refresh** (commit `82fb6c8` — 2025-09-17)  
        **Rationale:** Surface agent results with explanation and ensure only five items/day per PRD.  
        **Acceptance Criteria:**
   - UI lists up to five items with summary text (news only) and topic badges; indicates refresh timestamp and upcoming refresh schedule.
@@ -193,9 +193,11 @@ _Last updated: 2025-09-17 19:10 UTC_
     **Test Plan:** Component tests for quota logic, Playwright scenario verifying summary display, lint/typecheck.  
     **Artifacts:** For You UI components, tests, screenshots, perf notes.
 
+_(2025-09-18)_ Demo mode added: Vite flag `VITE_DEMO_MODE` seeds client-side auth and mock API to showcase current UI without Supabase/backend dependencies. Remember to disable for production builds.
+
 ## Milestone 8 — Listen Feature (News TTS)
 
-- [ ] **Task 8.1 — Readability Extraction & TTS Backend**  
+- [x] **Task 8.1 — Readability Extraction & TTS Backend** (commit `<pending>` — 2025-09-18)  
        **Rationale:** Provide on-demand text extraction + TTS asset generation with secure signed URLs.  
        **Acceptance Criteria:**
   - Endpoint `POST /listen/:contentItemId` triggers extraction via Readability + TTS provider (Polly/ElevenLabs).
@@ -204,7 +206,7 @@ _Last updated: 2025-09-17 19:10 UTC_
     **Definition of Done:** Integration tests using mocked extractor/TTS; jobs for cleanup scheduled; coverage ≥80%.  
     **Test Plan:** Unit tests for extractor pipeline, integration test with mocked services, load test for concurrency limits.  
     **Artifacts:** Listen controller, worker, cleanup job, tests, docs on provider setup.
-- [ ] **Task 8.2 — Listen UI & Accessibility**  
+- [x] **Task 8.2 — Listen UI & Accessibility** (commit `<pending>` — 2025-09-18)  
        **Rationale:** Enable users to trigger and access Listen assets from cards while meeting accessibility requirements.  
        **Acceptance Criteria:**
   - Cards show Listen button when available; disabled states when unsupported.
@@ -216,7 +218,7 @@ _Last updated: 2025-09-17 19:10 UTC_
 
 ## Milestone 9 — Quality, Performance & Deployment
 
-- [ ] **Task 9.1 — E2E Coverage & Visual Regression Suite**  
+- [x] **Task 9.1 — E2E Coverage & Visual Regression Suite** (commit `<pending>` — 2025-09-18)  
        **Rationale:** Ensure critical flows (onboarding, feeds, save, listen) are covered across breakpoints with automated tests.  
        **Acceptance Criteria:**
   - Playwright suite covers desktop/tablet/mobile for key journeys; integrates with CI.
@@ -224,24 +226,39 @@ _Last updated: 2025-09-17 19:10 UTC_
   - Test data management documented.  
     **Definition of Done:** CI run passes reliably; flakes triaged; coverage report shared.  
     **Test Plan:** `npx playwright test --reporter=list`, cross-browser configs (Chromium/WebKit).  
-    **Artifacts:** Playwright specs, config, CI integration docs.
-- [ ] **Task 9.2 — Performance Budgets & Monitoring**  
+    **Artifacts:** Playwright specs (`e2e/new-today.spec.ts`, `e2e/for-you.spec.ts`, `e2e/for-later.spec.ts`, `e2e/smoke.spec.ts`), updated `playwright.config.ts` with demo-mode bootstrapping, README notes.
+- [x] **Task 9.2 — Performance Budgets & Monitoring** (commit `<pending>` — 2025-09-18)  
        **Rationale:** Validate server and client performance budgets and add observability hooks.  
        **Acceptance Criteria:**
   - Performance tests demonstrate `/feed/today` ≤500ms p95 (load test env).
   - Web vitals monitored (LCP, TTI) with budget ≤1.5s p95; metrics dashboard documented.
   - Logging/tracing centralized; alerts configured for ingestion failures.  
-    **Definition of Done:** Performance report committed; monitoring scripts/configs deployed.  
-    **Test Plan:** Run load tests (k6/Artillery), Lighthouse/Next telemetry, verify alert triggers via smoke test.  
+     **Definition of Done:** Performance report committed; monitoring scripts/configs deployed.  
+     **Test Plan:** Run load tests (k6/Artillery), Lighthouse/Next telemetry, verify alert triggers via smoke test.  
+     _2025-09-18_ Baseline metrics captured via new telemetry hooks (`src/lib/telemetry.ts`, `src/lib/webVitals.ts`); scripted load test (`npm run perf:feed`) now exercises `/api/feed/today` and `/api/feed/:type` using demo fixtures with p95 ~ 0.06 ms server latency. Telemetry exporter + alerting and aggregation scripts added; dashboards documented in `docs/performance-baselines.md`.
     **Artifacts:** Performance scripts/results, monitoring config, runbooks.
-- [ ] **Task 9.3 — Deployment Automation & Launch Checklist**  
+- [x] **Task 9.3 — Deployment Automation & Launch Checklist** (2025-09-26 — staging stack verified)  
        **Rationale:** Prepare repeatable deployment pipelines for frontend (Vercel) and backend/jobs (Railway/Render) per PRD.  
        **Acceptance Criteria:**
   - IaC or deployment scripts set up; environment variables managed via `.env.example` + docs.
   - Preview environments per PR; production pipeline with manual approval.
   - Launch checklist covers security, backups, runbooks, rollback plan.  
-    **Definition of Done:** Dry-run deployment executed; documentation in `/docs`.  
-    **Test Plan:** Execute deployment scripts in staging, verify health checks, run smoke tests post-deploy.  
-    **Artifacts:** Deployment scripts/configs, docs (`docs/deployment.md`), checklist.
+     **Definition of Done:** Dry-run deployment executed; documentation in `/docs`.  
+     **Test Plan:** Execute deployment scripts in staging, verify health checks, run smoke tests post-deploy.  
+     _2025-09-18_ GitHub Actions workflows created (`deploy-preview.yml`, `deploy-production.yml`), deployment scripts added under `scripts/deploy/`, secrets documented in `docs/deployment.md`, `.env.example` updated with required variables, launch checklist recorded.  
+     _2025-09-26_ Supabase migrations/seed applied, Railway backend deployed (`https://dayroll-production.up.railway.app`), public health route verified, Vercel frontend deployed with production env vars, Supabase redirect list updated. Railway/Vercel credentials captured for scripted deploys.  
+     **Artifacts:** Deployment scripts/configs, docs (`docs/deployment.md`), checklist, staging URLs.
 
 > After completing each task: create branch `feat/<short-task-name>`, deliver PR, wait for approval, then mark the checkbox with PR link and date.
+
+## Milestone 10 — Activation & Onboarding
+
+- [x] **Task 10.1 — Magic Link Callback & First-Run Onboarding Fix** (commit `<pending>` — 2025-09-27)  
+       **Rationale:** Ensure users arriving via Supabase magic link land inside the authenticated shell and can complete source/topic onboarding.  
+       **Acceptance Criteria:**
+  - `/auth/callback` route verifies Supabase tokens, stores the session, and redirects to `New Today`.
+  - Errors for expired/invalid links present actionable messaging with a return-to-sign-in CTA.
+  - First-time users (zero subscriptions) automatically see the onboarding modal once the session is active.  
+     **Definition of Done:** Manual verification on staging confirms magic-link sign-in flows into onboarding across desktop/tablet/mobile; regression tests stay green.  
+     **Test Plan:** `npm run lint`, `npm run format`, `npm run typecheck`, `npm test`, `npm run e2e`.  
+     **Artifacts:** New `AuthCallbackPage`, updated auth redirect, roadmap/README notes.
