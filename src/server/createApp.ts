@@ -204,6 +204,37 @@ function markSaved(record: ContentItemRecord, savedIds: Set<string>): ContentIte
   }
 }
 
+async function ensureApplicationUser(client: SupabaseClient, user: User) {
+  const email = user.email
+  if (!email) {
+    console.error('[auth] Supabase user missing email', { userId: user.id })
+    return { success: false as const }
+  }
+
+  const authProvider =
+    (typeof user.app_metadata?.provider === 'string' && user.app_metadata.provider) || 'supabase'
+
+  const { error } = await client.from('users').upsert(
+    {
+      id: user.id,
+      email,
+      auth_provider: authProvider,
+    },
+    { onConflict: 'id' },
+  )
+
+  if (error) {
+    console.error('[auth] Failed to upsert user record', {
+      userId: user.id,
+      code: error.code,
+      message: error.message,
+    })
+    return { success: false as const }
+  }
+
+  return { success: true as const }
+}
+
 async function authenticateRequest(
   request: fastify.FastifyRequest,
   reply: fastify.FastifyReply,
@@ -220,6 +251,12 @@ async function authenticateRequest(
   const { data, error } = await client.auth.getUser(token)
   if (error || !data?.user) {
     reply.code(401).send({ error: 'Unauthorized' })
+    return
+  }
+
+  const ensureResult = await ensureApplicationUser(client, data.user)
+  if (!ensureResult.success) {
+    reply.code(500).send({ error: 'Failed to provision user profile' })
     return
   }
 
@@ -403,13 +440,22 @@ export async function createApp(deps: Partial<Dependencies> = {}) {
         })
         reply.code(201).send(created)
       } catch (error: unknown) {
-        if (
-          typeof error === 'object' &&
-          error &&
-          'code' in error &&
-          (error as { code?: string }).code === '23505'
-        ) {
+        const code = isPostgrestError(error) ? error.code : undefined
+        const message = error instanceof Error ? error.message : undefined
+        console.error('[subscriptions:create] failed', {
+          userId: user.id,
+          sourceType: parsed.data.sourceType,
+          sourceId: parsed.data.sourceId,
+          code,
+          message,
+          error,
+        })
+        if (code === '23505') {
           reply.code(409).send({ error: 'Subscription already exists for this source' })
+          return
+        }
+        if (code === '23503') {
+          reply.code(400).send({ error: 'User profile missing for subscription' })
           return
         }
         reply.code(500).send({ error: 'Failed to create subscription' })

@@ -10,17 +10,37 @@ import {
 } from './feedSerializers'
 
 describe('createApp', () => {
-  const buildMockClient = (user: User | null, shouldError = false) => {
+  type BuildClientOptions =
+    | boolean
+    | {
+        authShouldError?: boolean
+        upsertError?: { code?: string; message?: string | null }
+      }
+
+  const buildMockClient = (user: User | null, options: BuildClientOptions = {}) => {
+    const authShouldError =
+      typeof options === 'boolean' ? options : (options.authShouldError ?? false)
+    const upsertError = typeof options === 'boolean' ? null : (options.upsertError ?? null)
+
+    const upsert = vi.fn(async () => ({ data: null, error: upsertError }))
+
     return {
       auth: {
         getUser: vi.fn(async () => {
-          if (shouldError) {
+          if (authShouldError) {
             return { data: { user: null }, error: { message: 'boom' } }
           }
           return { data: { user }, error: null }
         }),
       },
-    } as unknown as SupabaseClient
+      from: vi.fn((table: string) => {
+        if (table === 'users') {
+          return { upsert }
+        }
+        throw new Error(`Unexpected table requested: ${table}`)
+      }),
+      __upsertMock: upsert,
+    } as unknown as SupabaseClient & { __upsertMock: ReturnType<typeof vi.fn> }
   }
 
   const buildSubscriptionRepo = (overrides: Partial<SubscriptionRepository> = {}) =>
@@ -96,19 +116,31 @@ describe('createApp', () => {
       shouldError?: boolean
       subscriptionOverrides?: Partial<SubscriptionRepository>
       contentOverrides?: Partial<ContentService>
+      userUpsertError?: { code?: string; message?: string | null }
     } = {},
   ) {
-    const { user = null, shouldError = false, subscriptionOverrides, contentOverrides } = options
+    const {
+      user = null,
+      shouldError = false,
+      subscriptionOverrides,
+      contentOverrides,
+      userUpsertError,
+    } = options
     const subscriptionRepo = buildSubscriptionRepo(subscriptionOverrides)
     const contentService = createContentServiceStub(contentOverrides)
 
+    const supabaseClient = buildMockClient(user, {
+      authShouldError: shouldError,
+      upsertError: userUpsertError ?? null,
+    })
+
     const app = await createApp({
-      getSupabaseClient: () => buildMockClient(user, shouldError),
+      getSupabaseClient: () => supabaseClient,
       getSubscriptionRepository: () => subscriptionRepo,
       getContentService: () => contentService,
     })
 
-    return { app, subscriptionRepo, contentService }
+    return { app, subscriptionRepo, contentService, supabaseClient }
   }
 
   it('responds to health check', async () => {
@@ -139,6 +171,7 @@ describe('createApp', () => {
       email: 'user@example.com',
       role: 'authenticated',
       aud: 'authenticated',
+      app_metadata: { provider: 'email' },
     } as unknown as User
     const subscriptionRepo = buildSubscriptionRepo()
     const app = await createApp({
@@ -156,6 +189,64 @@ describe('createApp', () => {
 
     expect(response.statusCode).toBe(200)
     expect(response.json()).toEqual({ id: 'user-1', email: 'user@example.com' })
+  })
+
+  it('provisions a users row during authentication', async () => {
+    const user = {
+      id: 'user-1',
+      email: 'user@example.com',
+      role: 'authenticated',
+      aud: 'authenticated',
+      app_metadata: { provider: 'email' },
+    } as unknown as User
+
+    const { app, supabaseClient } = await setupApp({ user })
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/api/me',
+      headers: {
+        authorization: 'Bearer token',
+      },
+    })
+
+    expect(response.statusCode).toBe(200)
+    const clientWithSpy = supabaseClient as unknown as {
+      __upsertMock: ReturnType<typeof vi.fn>
+    }
+    expect(clientWithSpy.__upsertMock).toHaveBeenCalledWith(
+      {
+        id: 'user-1',
+        email: 'user@example.com',
+        auth_provider: 'email',
+      },
+      { onConflict: 'id' },
+    )
+  })
+
+  it('fails fast when the users row cannot be provisioned', async () => {
+    const user = {
+      id: 'user-1',
+      email: 'user@example.com',
+      role: 'authenticated',
+      aud: 'authenticated',
+    } as unknown as User
+
+    const { app } = await setupApp({
+      user,
+      userUpsertError: { code: '23505', message: 'duplicate key value violates unique constraint' },
+    })
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/api/me',
+      headers: {
+        authorization: 'Bearer token',
+      },
+    })
+
+    expect(response.statusCode).toBe(500)
+    expect(response.json()).toEqual({ error: 'Failed to provision user profile' })
   })
 
   it('returns 401 when Supabase rejects the token', async () => {
